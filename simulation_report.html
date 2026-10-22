@@ -1,0 +1,430 @@
+<title>30-Customer Assortment Game</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,400&family=IBM+Plex+Sans+Condensed:wght@500;600&display=swap">
+<style>
+/* Layout: one reading column (~68ch) for prose; tables and the game chart may widen to 960px. */
+:root {
+  --bg: #f5f7f9;
+  --surface: #ffffff;
+  --ink: #111820;
+  --ink-2: #47525e;
+  --muted: #76828f;
+  --rule: #dbe1e7;
+  --grid: #e7ecf0;
+  --bar-other: #b9c3cc;
+  --p1: #2a78d6;
+  --p2: #eb6834;
+  --p3: #1baf7a;
+  --none: #c5ccd3;
+  --ring: #ffffff;
+  --font-body: "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-label: "IBM Plex Sans Condensed", "IBM Plex Sans", system-ui, sans-serif;
+  --font-data: "IBM Plex Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0e1217; --surface: #151a21; --ink: #edf1f5; --ink-2: #b3bdc8; --muted: #8592a0;
+    --rule: #29313b; --grid: #212831; --bar-other: #46505c;
+    --p1: #3987e5; --p2: #d95926; --p3: #199e70; --none: #4a5360; --ring: #151a21;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0e1217; --surface: #151a21; --ink: #edf1f5; --ink-2: #b3bdc8; --muted: #8592a0;
+  --rule: #29313b; --grid: #212831; --bar-other: #46505c;
+  --p1: #3987e5; --p2: #d95926; --p3: #199e70; --none: #4a5360; --ring: #151a21;
+  color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+body {
+  background: var(--bg); color: var(--ink);
+  font-family: var(--font-body); font-size: 16px; line-height: 1.6;
+  padding-inline: 16px; padding-block: 40px 72px;
+}
+main { max-width: 960px; margin-inline: auto; display: grid; gap: 56px; }
+.prose { max-width: 68ch; }
+h1, h2, h3 { text-wrap: balance; margin: 0; line-height: 1.2; }
+h1 { font-size: clamp(2rem, 1.4rem + 2.4vw, 2.9rem); font-weight: 600; letter-spacing: -0.015em; }
+h2 { font-size: 1.45rem; font-weight: 600; }
+h3 { font-size: 1.05rem; font-weight: 600; }
+p { margin: 0; }
+section { display: grid; gap: 18px; }
+.eyebrow, .label {
+  font-family: var(--font-label); font-weight: 600; font-size: 0.78rem;
+  letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted);
+}
+.lede { font-size: 1.15rem; color: var(--ink-2); max-width: 64ch; }
+code, .set, .num { font-family: var(--font-data); font-variant-numeric: tabular-nums; }
+.set { font-size: 0.92em; white-space: nowrap; }
+small { color: var(--muted); font-size: 0.82em; }
+a { color: var(--p1); }
+:focus-visible { outline: 2px solid var(--p1); outline-offset: 2px; }
+
+header { display: grid; gap: 16px; }
+
+.tiles { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 1px; background: var(--rule);
+  border: 1px solid var(--rule); border-radius: 6px; overflow: hidden; }
+.tile { background: var(--surface); padding: 18px 18px 16px; display: grid; gap: 4px; align-content: start; min-width: 0; }
+.tile .value { font-size: 1.85rem; font-weight: 600; line-height: 1.15; }
+.tile .note { color: var(--ink-2); font-size: 0.88rem; line-height: 1.4; }
+@media (max-width: 760px) { .tiles { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+
+ul.facts { margin: 0; padding-left: 1.1em; display: grid; gap: 6px; color: var(--ink); }
+ul.facts li::marker { color: var(--muted); }
+
+.table-wrap { overflow-x: auto; border: 1px solid var(--rule); border-radius: 6px; background: var(--surface); }
+table { border-collapse: collapse; width: 100%; font-size: 0.92rem; }
+th, td { padding: 9px 14px; text-align: left; border-bottom: 1px solid var(--grid); vertical-align: middle; }
+thead th { font-family: var(--font-label); font-weight: 600; font-size: 0.75rem; letter-spacing: 0.06em;
+  text-transform: uppercase; color: var(--muted); background: var(--surface); white-space: nowrap; }
+tbody tr:last-child th, tbody tr:last-child td { border-bottom: 0; }
+tbody th { font-weight: 500; }
+td.num, th.num { text-align: right; }
+#log-table { font-size: 0.86rem; }
+#log-table th, #log-table td { padding: 7px 12px; white-space: nowrap; }
+.caption { color: var(--ink-2); font-size: 0.88rem; max-width: 80ch; }
+.hi { font-weight: 600; }
+
+.dot { display: inline-block; width: 9px; height: 9px; border-radius: 50%; margin-right: 7px; vertical-align: 1px; }
+.dot.p1 { background: var(--p1); } .dot.p2 { background: var(--p2); } .dot.p3 { background: var(--p3); }
+.dot.none { background: transparent; box-shadow: inset 0 0 0 1.5px var(--none); }
+tr.nobuy td { color: var(--muted); }
+
+figure { margin: 0; display: grid; gap: 10px; }
+.chart-card { background: var(--surface); border: 1px solid var(--rule); border-radius: 6px; padding: 18px 18px 12px; position: relative; }
+.chart-scroll { overflow-x: auto; }
+#game-chart { display: block; width: 100%; min-width: 600px; height: auto; }
+#game-chart text { font-family: var(--font-body); }
+.axis-label { fill: var(--muted); font-size: 11.5px; }
+.tick-label { fill: var(--ink-2); font-size: 11.5px; font-variant-numeric: tabular-nums; }
+.annot { fill: var(--ink-2); font-size: 12px; }
+.annot-strong { fill: var(--ink); font-size: 12.5px; font-weight: 600; }
+.gridline { stroke: var(--grid); stroke-width: 1; }
+.refline { stroke: var(--muted); stroke-width: 1; }
+.series { fill: none; stroke: var(--ink); stroke-width: 2; stroke-linejoin: round; }
+.pt { fill: var(--ink); stroke: var(--ring); stroke-width: 2; }
+.cross { stroke: var(--muted); stroke-width: 1; }
+.hit { fill: transparent; cursor: default; }
+.hit:focus { outline: none; }
+.legend { display: flex; flex-wrap: wrap; gap: 6px 18px; font-size: 0.85rem; color: var(--ink-2); }
+.tooltip { position: absolute; pointer-events: none; background: var(--surface); color: var(--ink);
+  border: 1px solid var(--rule); border-radius: 6px; padding: 8px 10px; font-size: 0.82rem; line-height: 1.45;
+  box-shadow: 0 4px 14px rgb(0 0 0 / 0.12); min-width: 190px; max-width: 260px; }
+.tooltip b { font-weight: 600; }
+
+.phases { display: grid; gap: 20px; }
+.phase { display: grid; grid-template-columns: 9.5rem minmax(0, 1fr); gap: 4px 20px; }
+.phase .label { padding-top: 3px; }
+.phase p { max-width: 68ch; }
+@media (max-width: 640px) { .phase { grid-template-columns: minmax(0, 1fr); } }
+
+.barcell { display: flex; align-items: center; gap: 10px; min-width: 220px; }
+.bar { flex: 1; height: 10px; background: var(--grid); border-radius: 0 4px 4px 0; overflow: hidden; }
+.bar span { display: block; height: 100%; background: var(--bar-other); border-radius: 0 4px 4px 0; }
+tr.ours .bar span { background: var(--ink); }
+tr.ours th, tr.ours td.num { font-weight: 600; }
+tr.oracle th, tr.oracle td { color: var(--ink-2); }
+tr.oracle .bar span { background: transparent; box-shadow: inset 0 0 0 1.5px var(--muted); }
+
+.two-col { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
+.panel { background: var(--surface); border: 1px solid var(--rule); border-radius: 6px; padding: 16px 18px; display: grid; gap: 8px; align-content: start; min-width: 0; }
+@media (max-width: 700px) { .two-col { grid-template-columns: minmax(0, 1fr); } }
+
+.formula { font-family: var(--font-data); font-size: 0.9rem; background: var(--surface); border: 1px solid var(--rule);
+  border-radius: 6px; padding: 12px 14px; overflow-x: auto; white-space: nowrap; color: var(--ink); }
+footer { color: var(--muted); font-size: 0.85rem; border-top: 1px solid var(--rule); padding-top: 18px; }
+</style>
+
+<main>
+  <header>
+    <div class="eyebrow">IEOR 145/245 · Group simulation exercise · Game played October 20, 2026</div>
+    <h1>30-Customer Assortment Game</h1>
+    <p class="lede">We sold all 18 units for the maximum possible revenue of $270, selling the last unit to customer 27 of 30.
+      Every assortment came from a dynamic program built on customer-type choice models fitted to the training data, and
+      all 27 decisions followed it exactly.</p>
+    <div class="tiles" role="list">
+      <div class="tile" role="listitem"><span class="label">Revenue</span><span class="value num">$270</span><span class="note">the maximum: 6 units each at $10, $15, $20</span></div>
+      <div class="tile" role="listitem"><span class="label">Sold out at</span><span class="value num">27 / 30</span><span class="note">3 customers to spare</span></div>
+      <div class="tile" role="listitem"><span class="label">Forecast before the game</span><span class="value num">$268.7</span><span class="note">model's expected revenue under our policy</span></div>
+      <div class="tile" role="listitem"><span class="label">Chance of $270 on this customer sequence</span><span class="value num">94%</span><span class="note">vs 51% for the myopic greedy policy</span></div>
+    </div>
+  </header>
+
+  <section>
+    <h2>The game</h2>
+    <ul class="facts prose">
+      <li>Three products: product 1 at $10, product 2 at $15, product 3 at $20, with 6 units of each and no restocking.</li>
+      <li>30 customers arrive one at a time. Each is type A, B or C, and the type is revealed on arrival.</li>
+      <li>For each customer we choose which in-stock products to show. The customer buys at most one of them or walks away.</li>
+      <li>Goal: maximize total revenue. Since there are only 18 units for 30 customers, the $270 maximum requires selling every unit.</li>
+      <li>Training data: 63,000 past customers with their type, the assortment shown and the purchase. Every type was shown every one of the 7 possible assortments
+        (A 3,300 times each, B 2,100, C 3,600).</li>
+    </ul>
+  </section>
+
+  <section>
+    <h2>What each type buys</h2>
+    <p class="prose">The three types behave very differently. The table gives the purchase rate when each product is shown on its own, taken directly from the
+      training data, and the weights of a multinomial logit (MNL) model fitted separately to each type by maximum likelihood (Lecture 14A, no-purchase weight = 1).</p>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Type</th><th class="num">Buys product 1 alone</th><th class="num">Buys product 2 alone</th><th class="num">Buys product 3 alone</th><th class="num">MNL weights v<sub>1</sub>, v<sub>2</sub>, v<sub>3</sub></th><th>In short</th></tr></thead>
+        <tbody>
+          <tr><th scope="row">A</th><td class="num">18%</td><td class="num">16%</td><td class="num hi">62%</td><td class="num">0.20, 0.19, 1.59</td><td>Buys product 3 or nothing</td></tr>
+          <tr><th scope="row">B</th><td class="num">49%</td><td class="num hi">87%</td><td class="num">51%</td><td class="num">1.01, 6.95, 1.01</td><td>Strongly prefers product 2</td></tr>
+          <tr><th scope="row">C</th><td class="num">66%</td><td class="num">67%</td><td class="num hi">68%</td><td class="num">2.01, 2.07, 2.04</td><td>Buys whatever is shown</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="caption">Model fit: across all 7 assortments, predicted probabilities are within 0.021 of the observed frequencies. Likelihood-ratio tests against an
+      unrestricted model give p = 0.47 (A), 0.034 (B) and 0.66 (C); B's result is not significant after a Bonferroni correction for three tests.
+      A single MNL pooled across types is rejected (LR = 17,398, 6 df), so the model is personalized by type.</p>
+  </section>
+
+  <section>
+    <h2>The policy</h2>
+    <div class="prose" style="display:grid; gap:14px">
+      <p>Lecture 14B poses this problem (online assortment with finite inventory and personalized choice models) and solves it with a greedy rule:
+        show each customer the assortment with the highest expected revenue <em>for that customer</em>. Here greedy shows <span class="set">{2,3}</span> to every type
+        at the start and leaves the $10 product for later, which is a problem because type A rarely buys it.</p>
+      <p>We instead solve the full problem with a dynamic program. The state is the customer number and the remaining inventory; arriving types are
+        modeled as independent draws with the mix seen in the data (11 A : 7 B : 12 C out of 30). With 30 customers, 7<sup>3</sup> inventory levels
+        and 8 possible assortments, the program is solved exactly in milliseconds.</p>
+    </div>
+    <div class="formula">value of showing S to a type-k customer = V<sub>next</sub>(x) + Σ<sub>i∈S</sub> P<sub>k</sub>(buy i | S) · (r<sub>i</sub> − Δ<sub>i</sub>)</div>
+    <div class="prose" style="display:grid; gap:14px">
+      <p>Here Δ<sub>i</sub> is the <strong>opportunity cost</strong> of product i: how much expected future revenue one unit is worth if kept.
+        Each decision is therefore the Lecture 13 MNL assortment problem with every price r<sub>i</sub> replaced by an <strong>adjusted price</strong>
+        ρ<sub>i</sub> = r<sub>i</sub> − Δ<sub>i</sub>. We proved that the optimal set is always the in-stock products with the highest adjusted prices,
+        and checked this, along with the class LP, at all 30,780 possible decision points.</p>
+      <p>At the start, every unit is likely to sell eventually, so each opportunity cost is close to the full price. The adjusted prices are
+        ρ = (1.20, 0.84, 0.71) for products 1, 2, 3: the cheapest product is the most urgent to sell.</p>
+    </div>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Policy, evaluated before the game</th><th class="num">Expected revenue</th><th class="num">Sells all 18 units</th><th class="num">5th-percentile revenue</th></tr></thead>
+        <tbody>
+          <tr class="ours"><th scope="row">Dynamic program (ours)</th><td class="num hi">$268.57</td><td class="num hi">91.5%</td><td class="num">$260</td></tr>
+          <tr><th scope="row">Show all in stock</th><td class="num">$267.66</td><td class="num">85.8%</td><td class="num">$250</td></tr>
+          <tr><th scope="row">Inventory balancing (Golrezaei et al. 2014)</th><td class="num">$265.81</td><td class="num">76.5%</td><td class="num">$250</td></tr>
+          <tr><th scope="row">Myopic greedy (Lecture 14B)</th><td class="num">$260.97</td><td class="num">56.3%</td><td class="num">$230</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="caption">Expected revenue is computed exactly by policy evaluation, with customer behavior set to the observed frequencies in the training data.
+      Sell-out rates and percentiles come from 50,000 simulated games with common random numbers. Types arrive i.i.d. in the data's mix.</p>
+  </section>
+
+  <section>
+    <h2>How the game went</h2>
+    <figure>
+      <div class="chart-card" id="chart-card">
+        <div class="chart-scroll">
+          <svg id="game-chart" viewBox="0 0 760 300" role="img" aria-label="Projected final revenue as each customer arrived. It starts at $268.7, falls to a low of $261.0 at customers 14 and 15 after four straight no-purchases, then climbs to the final $270 as the last units sell. The full values are in the game log table below."></svg>
+        </div>
+        <div class="tooltip" id="tip" hidden></div>
+      </div>
+      <div class="legend" aria-hidden="true">
+        <span><span class="dot p1"></span>bought product 1</span>
+        <span><span class="dot p2"></span>bought product 2</span>
+        <span><span class="dot p3"></span>bought product 3</span>
+        <span><span class="dot none"></span>no purchase</span>
+      </div>
+      <figcaption class="caption"><strong>Projected final revenue as each customer arrived</strong> (revenue already earned plus the model's expected revenue from the
+        remaining customers). The strip under the axis shows what each customer bought. Hover or tab to a customer for details.</figcaption>
+    </figure>
+
+    <div class="phases">
+      <div class="phase">
+        <span class="label">Customers 1–3</span>
+        <p><strong>Opening rule.</strong> Type A saw everything, while B and C saw <span class="set">{1,2}</span>. Product 3 was held back for type A, the only type that
+          wants little else. B and C each bought product 2.</p>
+      </div>
+      <div class="phase">
+        <span class="label">Customers 4–17</span>
+        <p><strong>Save product 2 for type B.</strong> Once product 2 dropped to 4 units, type C customers (who buy anything) were steered to <span class="set">{1}</span>,
+          and later to <span class="set">{1,3}</span>. The one exception was customer 6, where the three adjusted prices were within $0.50 of each other,
+          so C saw everything and bought product 2. Type B kept seeing product 2 and bought it at customers 8 and 14. At customer 9, the adjusted prices
+          were ρ = (2.01, 1.22, 1.50), so the top-ranked set for C was <span class="set">{1,3}</span>. Customers 10–13 bought nothing, four in a row,
+          and the projection fell to its low point of $261.0. Then three C customers in a row bought product 1 (customers 15–17).</p>
+      </div>
+      <div class="phase">
+        <span class="label">Customers 18–22</span>
+        <p><strong>Push product 3.</strong> With all 6 units of product 3 left and 13 customers to go, product 3 became the most urgent:
+          ρ = (3.85, 3.55, 6.19) at customer 18, so C was shown <span class="set">{3}</span> alone and bought it. Type A customers saw <span class="set">{1,3}</span>,
+          which kept the last unit of product 2 for type B, who bought it at customer 20. Another B bought the last unit of product 1 at customer 22.</p>
+      </div>
+      <div class="phase">
+        <span class="label">Customers 23–27</span>
+        <p><strong>Clear the last units.</strong> Only product 3 remained, so everyone saw <span class="set">{3}</span>. Two B customers passed, then three A customers in a row bought it.</p>
+      </div>
+    </div>
+
+    <div class="table-wrap">
+      <table id="log-table">
+        <thead><tr><th class="num">Customer</th><th>Type</th><th>Inventory</th><th>Shown</th><th class="num">P(no buy)</th><th>Outcome</th><th class="num">Revenue</th><th class="num">Projected</th></tr></thead>
+        <tbody></tbody>
+      </table>
+    </div>
+    <p class="caption">Inventory is the stock of products 1, 2, 3 when the customer arrived; P(no buy) is the model's chance the customer walks away from the assortment shown;
+      revenue is the running total after the customer; projected is revenue so far plus the model's expected revenue from the remaining customers.
+      Game log, transcribed by parsing the saved <code>play.py</code> output (<code>simulation_run_log.txt</code>). Replaying the log through the model confirms that
+      every shown assortment equals the policy's choice and that the logged inventory and revenue are consistent.</p>
+  </section>
+
+  <section>
+    <h2>Policy or luck?</h2>
+    <div class="two-col">
+      <div class="panel">
+        <span class="label">Purchases</span>
+        <p><strong class="num">9</strong> customers bought nothing, against <strong class="num">7.3</strong> expected for the assortments shown. The outcomes ran slightly against us.</p>
+      </div>
+      <div class="panel">
+        <span class="label">Arrivals among the first 27</span>
+        <p><span class="num">8 A, 7 B, 12 C</span>, against <span class="num">9.9, 6.3, 10.8</span> expected. Slightly fewer of the pickiest type (A) and more of the
+          least picky (C) is a small advantage.</p>
+      </div>
+    </div>
+    <p class="prose">To separate the policy from luck, we replayed the same customer types through each policy and computed the exact chance of reaching $270.</p>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Policy, same 27 customer types</th><th class="num">Expected revenue</th><th>Chance of $270</th></tr></thead>
+        <tbody>
+<tr class="ours"><th scope="row">Dynamic program (our policy)</th>
+<td class="num">$269.09</td>
+<td class="barcell"><div class="bar"><span style="width:94.3%"></span></div><span class="num">94.3%</span></td></tr>
+<tr class=""><th scope="row">Show all in stock</th>
+<td class="num">$268.22</td>
+<td class="barcell"><div class="bar"><span style="width:88.4%"></span></div><span class="num">88.4%</span></td></tr>
+<tr class=""><th scope="row">Inventory balancing</th>
+<td class="num">$266.02</td>
+<td class="barcell"><div class="bar"><span style="width:76.6%"></span></div><span class="num">76.6%</span></td></tr>
+<tr class=""><th scope="row">Myopic greedy (Lecture 14B)</th>
+<td class="num">$259.35</td>
+<td class="barcell"><div class="bar"><span style="width:50.7%"></span></div><span class="num">50.7%</span></td></tr>
+<tr class="oracle"><th scope="row">Clairvoyant planner<br><small>knows all 27 types in advance</small></th>
+<td class="num">$269.22</td>
+<td class="barcell"><div class="bar"><span style="width:95.1%"></span></div><span class="num">95.1%</span></td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="caption">Exact values from policy evaluation. Customers 1–27 have the types observed in the game. Customers 28–30 never arrived, so their types are drawn
+      from the data's mix. Purchase behavior uses the training data's observed frequencies; using the fitted MNL instead changes each value by at most $0.15 and 0.5 points.</p>
+    <p class="prose">Facing these customers, our policy had a 94.3% chance of $270. That is within one point of a planner who knew all 27 customers' types in advance (95.1%).
+      The same customers would have given the greedy rule from class roughly a coin flip (50.7%). The $270 was not guaranteed, but it was the likely outcome of the policy,
+      not a lucky one.</p>
+  </section>
+
+  <section>
+    <h2>Limitations</h2>
+    <ul class="facts prose">
+      <li>The policy assumes customers in the simulation behave like those in the training data. A single game is too short to test that assumption.</li>
+      <li>The arrival process of types was not given. We planned with the data's mix and tested 13 scenarios (shifted mixes and adversarial orders such as
+        all type A last). The policy's largest loss against a planner who knew the true process was $2.79.</li>
+      <li>One game is one random draw. Even with the best policy, revenue over a 30-customer game has a standard deviation of about $5.50.</li>
+    </ul>
+  </section>
+
+  <footer>
+    Reproduce: <code>rm_model.py</code> (estimation, dynamic program, baselines, evaluation), <code>RM_assortment_model.ipynb</code> (full analysis, proofs and robustness tests),
+    <code>play.py</code> (the live helper used in this game), <code>policy_table.csv</code> (the policy as a lookup table) and <code>simulation_run_log.txt</code> (this game).
+  </footer>
+</main>
+
+<script>
+(function () {
+  const DATA = [{"c": 1, "t": "A", "inv": [6, 6, 6], "s": "{1,2,3}", "p0": 0.336, "o": 0, "rev": 0, "proj": 268.7}, {"c": 2, "t": "B", "inv": [6, 6, 6], "s": "{1,2}", "p0": 0.112, "o": 2, "rev": 15, "proj": 268.0}, {"c": 3, "t": "C", "inv": [6, 5, 6], "s": "{1,2}", "p0": 0.197, "o": 2, "rev": 30, "proj": 268.2}, {"c": 4, "t": "C", "inv": [6, 4, 6], "s": "{1}", "p0": 0.332, "o": 0, "rev": 30, "proj": 268.3}, {"c": 5, "t": "C", "inv": [6, 4, 6], "s": "{1}", "p0": 0.332, "o": 1, "rev": 40, "proj": 267.5}, {"c": 6, "t": "C", "inv": [5, 4, 6], "s": "{1,2,3}", "p0": 0.14, "o": 2, "rev": 55, "proj": 268.4}, {"c": 7, "t": "A", "inv": [5, 3, 6], "s": "{1,2,3}", "p0": 0.336, "o": 0, "rev": 55, "proj": 268.5}, {"c": 8, "t": "B", "inv": [5, 3, 6], "s": "{1,2,3}", "p0": 0.1, "o": 2, "rev": 70, "proj": 267.7}, {"c": 9, "t": "C", "inv": [5, 2, 6], "s": "{1,3}", "p0": 0.198, "o": 1, "rev": 80, "proj": 267.7}, {"c": 10, "t": "C", "inv": [4, 2, 6], "s": "{1,3}", "p0": 0.198, "o": 0, "rev": 80, "proj": 268.5}, {"c": 11, "t": "C", "inv": [4, 2, 6], "s": "{1,3}", "p0": 0.198, "o": 0, "rev": 80, "proj": 267.6}, {"c": 12, "t": "C", "inv": [4, 2, 6], "s": "{1,3}", "p0": 0.198, "o": 0, "rev": 80, "proj": 266.2}, {"c": 13, "t": "A", "inv": [4, 2, 6], "s": "{1,2,3}", "p0": 0.336, "o": 0, "rev": 80, "proj": 264.1}, {"c": 14, "t": "B", "inv": [4, 2, 6], "s": "{1,2,3}", "p0": 0.1, "o": 2, "rev": 95, "proj": 261.0}, {"c": 15, "t": "C", "inv": [4, 1, 6], "s": "{1,3}", "p0": 0.198, "o": 1, "rev": 105, "proj": 261.0}, {"c": 16, "t": "C", "inv": [3, 1, 6], "s": "{1,3}", "p0": 0.198, "o": 1, "rev": 115, "proj": 262.5}, {"c": 17, "t": "C", "inv": [2, 1, 6], "s": "{1,3}", "p0": 0.198, "o": 1, "rev": 125, "proj": 263.3}, {"c": 18, "t": "C", "inv": [1, 1, 6], "s": "{3}", "p0": 0.329, "o": 3, "rev": 145, "proj": 263.7}, {"c": 19, "t": "A", "inv": [1, 1, 5], "s": "{1,3}", "p0": 0.358, "o": 3, "rev": 165, "proj": 266.0}, {"c": 20, "t": "B", "inv": [1, 1, 4], "s": "{1,2,3}", "p0": 0.1, "o": 2, "rev": 180, "proj": 267.7}, {"c": 21, "t": "A", "inv": [1, 0, 4], "s": "{1,3}", "p0": 0.358, "o": 3, "rev": 200, "proj": 267.6}, {"c": 22, "t": "B", "inv": [1, 0, 3], "s": "{1,3}", "p0": 0.331, "o": 1, "rev": 210, "proj": 268.8}, {"c": 23, "t": "B", "inv": [0, 0, 3], "s": "{3}", "p0": 0.498, "o": 0, "rev": 210, "proj": 269.0}, {"c": 24, "t": "B", "inv": [0, 0, 3], "s": "{3}", "p0": 0.498, "o": 0, "rev": 210, "proj": 267.9}, {"c": 25, "t": "A", "inv": [0, 0, 3], "s": "{3}", "p0": 0.386, "o": 3, "rev": 230, "proj": 265.9}, {"c": 26, "t": "A", "inv": [0, 0, 2], "s": "{3}", "p0": 0.386, "o": 3, "rev": 250, "proj": 268.2}, {"c": 27, "t": "A", "inv": [0, 0, 1], "s": "{3}", "p0": 0.386, "o": 3, "rev": 270, "proj": 269.5}];
+  const PRICE = [0, 10, 15, 20];
+  const fmt = (v) => "$" + v.toFixed(1);
+  const outcomeText = (o) => o ? `bought product ${o} ($${PRICE[o]})` : "no purchase";
+
+  // ---- log table ----
+  const tbody = document.querySelector("#log-table tbody");
+  DATA.forEach((d) => {
+    const tr = document.createElement("tr");
+    if (!d.o) tr.className = "nobuy";
+    tr.innerHTML = `<td class="num">${d.c}</td><td>${d.t}</td><td class="num">(${d.inv.join(", ")})</td>` +
+      `<td><span class="set">${d.s}</span></td><td class="num">${d.p0.toFixed(2)}</td>` +
+      `<td><span class="dot ${d.o ? "p" + d.o : "none"}"></span>${d.o ? "product " + d.o + " ($" + PRICE[d.o] + ")" : "none"}</td>` +
+      `<td class="num">$${d.rev}</td><td class="num">${fmt(d.proj)}</td>`;
+    tbody.appendChild(tr);
+  });
+
+  // ---- chart ----
+  const svg = document.getElementById("game-chart");
+  const NS = "http://www.w3.org/2000/svg";
+  const el = (tag, attrs, parent = svg) => {
+    const n = document.createElementNS(NS, tag);
+    for (const k in attrs) n.setAttribute(k, attrs[k]);
+    parent.appendChild(n);
+    return n;
+  };
+  const W = 760, L = 52, R = 30, TOP = 22, BOT = 196;
+  const YMIN = 256, YMAX = 272;
+  const pts = DATA.map((d) => ({ x: d.c, y: d.proj, d }));
+  pts.push({ x: 28, y: 270, d: null });
+  const xs = (i) => L + (i - 1) * (W - L - R) / 27;
+  const ys = (v) => BOT - (v - YMIN) * (BOT - TOP) / (YMAX - YMIN);
+
+  [258, 262, 266, 270].forEach((v) => {
+    el("line", { x1: L, x2: W - R, y1: ys(v), y2: ys(v), class: v === 270 ? "refline" : "gridline" });
+    el("text", { x: L - 8, y: ys(v) + 4, "text-anchor": "end", class: "tick-label" }).textContent = "$" + v;
+  });
+  el("line", { x1: L, x2: W - R, y1: BOT, y2: BOT, class: "refline" });
+  el("text", { x: xs(2.2), y: ys(270) - 7, class: "annot" }).textContent = "Maximum possible: $270";
+
+  // outcome strip
+  const STRIP_Y = BOT + 10, STRIP_H = 14, step = (W - L - R) / 27;
+  DATA.forEach((d) => {
+    el("rect", { x: xs(d.c) - step / 2 + 1.5, y: STRIP_Y, width: step - 3, height: STRIP_H, rx: 2,
+      fill: d.o ? `var(--p${d.o})` : "transparent", stroke: d.o ? "none" : "var(--none)", "stroke-width": d.o ? 0 : 1.5 });
+  });
+  [1, 4, 7, 10, 13, 16, 19, 22, 25].forEach((c) => {
+    el("text", { x: xs(c), y: STRIP_Y + STRIP_H + 18, "text-anchor": "middle", class: "tick-label" }).textContent = c;
+  });
+  el("text", { x: xs(28), y: STRIP_Y + STRIP_H + 18, "text-anchor": "middle", class: "tick-label" }).textContent = "End";
+  el("text", { x: L + (W - L - R) / 2, y: STRIP_Y + STRIP_H + 42, "text-anchor": "middle", class: "axis-label" }).textContent = "Customer";
+
+  // series
+  el("path", { d: pts.map((p, i) => (i ? "L" : "M") + xs(p.x).toFixed(1) + " " + ys(p.y).toFixed(1)).join(" "), class: "series" });
+  pts.forEach((p, i) => el("circle", { cx: xs(p.x), cy: ys(p.y), r: i === pts.length - 1 ? 5.5 : 4, class: "pt" }));
+
+  // annotations
+  const low = DATA.find((d) => d.c === 14);
+  el("text", { x: xs(14) + 2, y: ys(low.proj) + 22, class: "annot-strong" }).textContent = "Low point " + fmt(low.proj);
+  el("text", { x: xs(14) + 2, y: ys(low.proj) + 38, class: "annot" }).textContent = "after customers 10–13 all walked away";
+  el("text", { x: xs(28) - 10, y: ys(270) - 7, "text-anchor": "end", class: "annot-strong" }).textContent = "Sold out: $270";
+
+  // hover / focus layer
+  const cross = el("line", { y1: TOP - 6, y2: STRIP_Y + STRIP_H, class: "cross", visibility: "hidden" });
+  const tip = document.getElementById("tip");
+  const card = document.getElementById("chart-card");
+  const show = (p, evt) => {
+    const X = xs(p.x);
+    cross.setAttribute("x1", X); cross.setAttribute("x2", X); cross.setAttribute("visibility", "visible");
+    tip.innerHTML = p.d
+      ? `<b>Customer ${p.d.c} · type ${p.d.t}</b><br>Inventory (${p.d.inv.join(", ")}) · shown <span class="set">${p.d.s}</span><br>` +
+        `Outcome: ${outcomeText(p.d.o)}<br>Projected total on arrival: <b>${fmt(p.d.proj)}</b>`
+      : `<b>End of game</b><br>All 18 units sold<br>Final revenue: <b>$270</b>`;
+    tip.hidden = false;
+    const box = svg.getBoundingClientRect(), cb = card.getBoundingClientRect();
+    const px = box.left - cb.left + X * box.width / W, py = box.top - cb.top + ys(p.y) * box.height / 300;
+    const tw = tip.offsetWidth, th = tip.offsetHeight;
+    let left = px + 14; if (left + tw > cb.width - 8) left = px - tw - 14;
+    tip.style.left = Math.max(8, left) + "px";
+    tip.style.top = Math.max(8, py - th / 2) + "px";
+  };
+  const hide = () => { tip.hidden = true; cross.setAttribute("visibility", "hidden"); };
+  pts.forEach((p) => {
+    const hit = el("rect", { x: xs(p.x) - step / 2, y: TOP - 6, width: step, height: STRIP_Y + STRIP_H - TOP + 6, class: "hit", tabindex: 0,
+      "aria-label": p.d ? `Customer ${p.d.c}, type ${p.d.t}, shown ${p.d.s}, ${outcomeText(p.d.o)}, projected total ${fmt(p.d.proj)}` : "End of game, revenue $270" });
+    hit.addEventListener("pointerenter", () => show(p));
+    hit.addEventListener("focus", () => show(p));
+    hit.addEventListener("pointerleave", hide);
+    hit.addEventListener("blur", hide);
+  });
+})();
+</script>
