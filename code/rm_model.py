@@ -6,7 +6,7 @@ Setting
 * T = 30 customers arrive one at a time. Each customer's type (A, B, C) is revealed on
   arrival, we pick an assortment from the products still in stock, and the customer
   buys at most one product (or nothing).
-* Choice behaviour of each type is learned from large_choice_training_data.csv.
+* Choice behaviour of each type is learned from data/large_choice_training_data.csv.
 
 Conventions
 -----------
@@ -18,6 +18,7 @@ Conventions
 * Inventory states are arrays indexed by x = (x1, x2, x3), 0 <= x_i <= c_i.
 """
 import itertools
+from pathlib import Path
 
 import numpy as np
 import pandas as pd
@@ -50,7 +51,10 @@ LABELS = [label(s) for s in SUBSETS]
 # ----------------------------------------------------------------------------------------
 # Data
 # ----------------------------------------------------------------------------------------
-def load_counts(path="large_choice_training_data.csv"):
+DATA_PATH = Path(__file__).resolve().parent.parent / "data" / "large_choice_training_data.csv"
+
+
+def load_counts(path=DATA_PATH):
     """Return (df, counts) with counts[k, s, j] = # of type-k customers shown s who chose j."""
     df = pd.read_csv(path)
     idx = {lab: n for n, lab in enumerate(LABELS)}

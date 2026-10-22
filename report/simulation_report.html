@@ -143,13 +143,14 @@ footer { color: var(--muted); font-size: 0.85rem; border-top: 1px solid var(--ru
     <div class="eyebrow">IEOR 145/245 · Group simulation exercise · Game played October 20, 2026</div>
     <h1>30-Customer Assortment Game</h1>
     <p class="lede">We sold all 18 units for the maximum possible revenue of $270, selling the last unit to customer 27 of 30.
-      Every assortment came from a dynamic program built on customer-type choice models fitted to the training data, and
-      all 27 decisions followed it exactly.</p>
+      The assortments came from a dynamic program built on customer-type choice models fitted to the training data.
+      Customers 3–27 were shown exactly what it recommended; customers 1 and 2 were shown <span class="set">{2,3}</span> instead,
+      which cost about $0.13 in expected revenue.</p>
     <div class="tiles" role="list">
       <div class="tile" role="listitem"><span class="label">Revenue</span><span class="value num">$270</span><span class="note">the maximum: 6 units each at $10, $15, $20</span></div>
       <div class="tile" role="listitem"><span class="label">Sold out at</span><span class="value num">27 / 30</span><span class="note">3 customers to spare</span></div>
       <div class="tile" role="listitem"><span class="label">Forecast before the game</span><span class="value num">$268.7</span><span class="note">model's expected revenue under our policy</span></div>
-      <div class="tile" role="listitem"><span class="label">Chance of $270 on this customer sequence</span><span class="value num">94%</span><span class="note">vs 51% for the myopic greedy policy</span></div>
+      <div class="tile" role="listitem"><span class="label">Chance of $270 on this customer sequence</span><span class="value num">94%</span><span class="note">as played; 51% for the myopic greedy policy</span></div>
     </div>
   </header>
 
@@ -240,8 +241,11 @@ footer { color: var(--muted); font-size: 0.85rem; border-top: 1px solid var(--ru
     <div class="phases">
       <div class="phase">
         <span class="label">Customers 1–3</span>
-        <p><strong>Opening rule.</strong> Type A saw everything, while B and C saw <span class="set">{1,2}</span>. Product 3 was held back for type A, the only type that
-          wants little else. B and C each bought product 2.</p>
+        <p><strong>Opening.</strong> The simulator record shows customers 1 (A) and 2 (B) were shown <span class="set">{2,3}</span>, not the policy's
+          <span class="set">{1,2,3}</span> and <span class="set">{1,2}</span>. The outcomes were what the policy's assortments could also have produced
+          (A bought nothing, B bought product 2), so the inventory and every later state matched the policy's path. Ex ante the two deviations cost
+          $0.05 and $0.08 in expected revenue. From customer 3 on, assortments followed the policy: C saw <span class="set">{1,2}</span>, holding product 3
+          back for type A, and bought product 2.</p>
       </div>
       <div class="phase">
         <span class="label">Customers 4–17</span>
@@ -269,10 +273,11 @@ footer { color: var(--muted); font-size: 0.85rem; border-top: 1px solid var(--ru
         <tbody></tbody>
       </table>
     </div>
-    <p class="caption">Inventory is the stock of products 1, 2, 3 when the customer arrived; P(no buy) is the model's chance the customer walks away from the assortment shown;
+    <p class="caption">Shown is the assortment recorded by the simulator; where it differs from the policy's recommendation, the recommendation is noted.
+      Inventory is the stock of products 1, 2, 3 when the customer arrived; P(no buy) is the model's chance the customer walks away from the assortment shown;
       revenue is the running total after the customer; projected is revenue so far plus the model's expected revenue from the remaining customers.
-      Game log, transcribed by parsing the saved <code>play.py</code> output (<code>simulation_run_log.txt</code>). Replaying the log through the model confirms that
-      every shown assortment equals the policy's choice and that the logged inventory and revenue are consistent.</p>
+      Source: the simulator's history file (<code>LIVE-RHR5BR_assortment_simulation_history.csv</code>), cross-checked against the <code>play.py</code> session log.
+      Types, purchases, inventory and revenue agree in both records; the shown assortments agree for customers 3–27.</p>
   </section>
 
   <section>
@@ -280,7 +285,7 @@ footer { color: var(--muted); font-size: 0.85rem; border-top: 1px solid var(--ru
     <div class="two-col">
       <div class="panel">
         <span class="label">Purchases</span>
-        <p><strong class="num">9</strong> customers bought nothing, against <strong class="num">7.3</strong> expected for the assortments shown. The outcomes ran slightly against us.</p>
+        <p><strong class="num">9</strong> customers bought nothing, against <strong class="num">7.4</strong> expected for the assortments shown. The outcomes ran slightly against us.</p>
       </div>
       <div class="panel">
         <span class="label">Arrivals among the first 27</span>
@@ -293,7 +298,10 @@ footer { color: var(--muted); font-size: 0.85rem; border-top: 1px solid var(--ru
       <table>
         <thead><tr><th>Policy, same 27 customer types</th><th class="num">Expected revenue</th><th>Chance of $270</th></tr></thead>
         <tbody>
-<tr class="ours"><th scope="row">Dynamic program (our policy)</th>
+<tr class="ours"><th scope="row">As we actually played<br><small>customers 1–2 shown {2,3}, then the policy</small></th>
+<td class="num">$269.04</td>
+<td class="barcell"><div class="bar"><span style="width:94.0%"></span></div><span class="num">94.0%</span></td></tr>
+<tr class=""><th scope="row">Dynamic program, followed for all 27</th>
 <td class="num">$269.09</td>
 <td class="barcell"><div class="bar"><span style="width:94.3%"></span></div><span class="num">94.3%</span></td></tr>
 <tr class=""><th scope="row">Show all in stock</th>
@@ -313,7 +321,7 @@ footer { color: var(--muted); font-size: 0.85rem; border-top: 1px solid var(--ru
     </div>
     <p class="caption">Exact values from policy evaluation. Customers 1–27 have the types observed in the game. Customers 28–30 never arrived, so their types are drawn
       from the data's mix. Purchase behavior uses the training data's observed frequencies; using the fitted MNL instead changes each value by at most $0.15 and 0.5 points.</p>
-    <p class="prose">Facing these customers, our policy had a 94.3% chance of $270. That is within one point of a planner who knew all 27 customers' types in advance (95.1%).
+    <p class="prose">Facing these customers, the way we played had a 94.0% chance of $270 (94.3% had customers 1–2 also followed the policy). That is within about one point of a planner who knew all 27 customers' types in advance (95.1%).
       The same customers would have given the greedy rule from class roughly a coin flip (50.7%). The $270 was not guaranteed, but it was the likely outcome of the policy,
       not a lucky one.</p>
   </section>
@@ -329,14 +337,14 @@ footer { color: var(--muted); font-size: 0.85rem; border-top: 1px solid var(--ru
   </section>
 
   <footer>
-    Reproduce: <code>rm_model.py</code> (estimation, dynamic program, baselines, evaluation), <code>RM_assortment_model.ipynb</code> (full analysis, proofs and robustness tests),
-    <code>play.py</code> (the live helper used in this game), <code>policy_table.csv</code> (the policy as a lookup table) and <code>simulation_run_log.txt</code> (this game).
+    Reproduce: <code>code/rm_model.py</code> (estimation, dynamic program, baselines, evaluation), <code>notebooks/RM_assortment_model.ipynb</code> (full analysis, proofs and robustness tests),
+    <code>code/play.py</code> (the live helper used in this game), <code>outputs/policy_table.csv</code> (the policy as a lookup table) and <code>simulation_results/</code> (this game's records).
   </footer>
 </main>
 
 <script>
 (function () {
-  const DATA = [{"c": 1, "t": "A", "inv": [6, 6, 6], "s": "{1,2,3}", "p0": 0.336, "o": 0, "rev": 0, "proj": 268.7}, {"c": 2, "t": "B", "inv": [6, 6, 6], "s": "{1,2}", "p0": 0.112, "o": 2, "rev": 15, "proj": 268.0}, {"c": 3, "t": "C", "inv": [6, 5, 6], "s": "{1,2}", "p0": 0.197, "o": 2, "rev": 30, "proj": 268.2}, {"c": 4, "t": "C", "inv": [6, 4, 6], "s": "{1}", "p0": 0.332, "o": 0, "rev": 30, "proj": 268.3}, {"c": 5, "t": "C", "inv": [6, 4, 6], "s": "{1}", "p0": 0.332, "o": 1, "rev": 40, "proj": 267.5}, {"c": 6, "t": "C", "inv": [5, 4, 6], "s": "{1,2,3}", "p0": 0.14, "o": 2, "rev": 55, "proj": 268.4}, {"c": 7, "t": "A", "inv": [5, 3, 6], "s": "{1,2,3}", "p0": 0.336, "o": 0, "rev": 55, "proj": 268.5}, {"c": 8, "t": "B", "inv": [5, 3, 6], "s": "{1,2,3}", "p0": 0.1, "o": 2, "rev": 70, "proj": 267.7}, {"c": 9, "t": "C", "inv": [5, 2, 6], "s": "{1,3}", "p0": 0.198, "o": 1, "rev": 80, "proj": 267.7}, {"c": 10, "t": "C", "inv": [4, 2, 6], "s": "{1,3}", "p0": 0.198, "o": 0, "rev": 80, "proj": 268.5}, {"c": 11, "t": "C", "inv": [4, 2, 6], "s": "{1,3}", "p0": 0.198, "o": 0, "rev": 80, "proj": 267.6}, {"c": 12, "t": "C", "inv": [4, 2, 6], "s": "{1,3}", "p0": 0.198, "o": 0, "rev": 80, "proj": 266.2}, {"c": 13, "t": "A", "inv": [4, 2, 6], "s": "{1,2,3}", "p0": 0.336, "o": 0, "rev": 80, "proj": 264.1}, {"c": 14, "t": "B", "inv": [4, 2, 6], "s": "{1,2,3}", "p0": 0.1, "o": 2, "rev": 95, "proj": 261.0}, {"c": 15, "t": "C", "inv": [4, 1, 6], "s": "{1,3}", "p0": 0.198, "o": 1, "rev": 105, "proj": 261.0}, {"c": 16, "t": "C", "inv": [3, 1, 6], "s": "{1,3}", "p0": 0.198, "o": 1, "rev": 115, "proj": 262.5}, {"c": 17, "t": "C", "inv": [2, 1, 6], "s": "{1,3}", "p0": 0.198, "o": 1, "rev": 125, "proj": 263.3}, {"c": 18, "t": "C", "inv": [1, 1, 6], "s": "{3}", "p0": 0.329, "o": 3, "rev": 145, "proj": 263.7}, {"c": 19, "t": "A", "inv": [1, 1, 5], "s": "{1,3}", "p0": 0.358, "o": 3, "rev": 165, "proj": 266.0}, {"c": 20, "t": "B", "inv": [1, 1, 4], "s": "{1,2,3}", "p0": 0.1, "o": 2, "rev": 180, "proj": 267.7}, {"c": 21, "t": "A", "inv": [1, 0, 4], "s": "{1,3}", "p0": 0.358, "o": 3, "rev": 200, "proj": 267.6}, {"c": 22, "t": "B", "inv": [1, 0, 3], "s": "{1,3}", "p0": 0.331, "o": 1, "rev": 210, "proj": 268.8}, {"c": 23, "t": "B", "inv": [0, 0, 3], "s": "{3}", "p0": 0.498, "o": 0, "rev": 210, "proj": 269.0}, {"c": 24, "t": "B", "inv": [0, 0, 3], "s": "{3}", "p0": 0.498, "o": 0, "rev": 210, "proj": 267.9}, {"c": 25, "t": "A", "inv": [0, 0, 3], "s": "{3}", "p0": 0.386, "o": 3, "rev": 230, "proj": 265.9}, {"c": 26, "t": "A", "inv": [0, 0, 2], "s": "{3}", "p0": 0.386, "o": 3, "rev": 250, "proj": 268.2}, {"c": 27, "t": "A", "inv": [0, 0, 1], "s": "{3}", "p0": 0.386, "o": 3, "rev": 270, "proj": 269.5}];
+  const DATA = [{"c": 1, "t": "A", "inv": [6, 6, 6], "s": "{2,3}", "pol": "{1,2,3}", "p0": 0.36, "o": 0, "rev": 0, "proj": 268.7}, {"c": 2, "t": "B", "inv": [6, 6, 6], "s": "{2,3}", "pol": "{1,2}", "p0": 0.112, "o": 2, "rev": 15, "proj": 268.0}, {"c": 3, "t": "C", "inv": [6, 5, 6], "s": "{1,2}", "pol": null, "p0": 0.197, "o": 2, "rev": 30, "proj": 268.2}, {"c": 4, "t": "C", "inv": [6, 4, 6], "s": "{1}", "pol": null, "p0": 0.332, "o": 0, "rev": 30, "proj": 268.3}, {"c": 5, "t": "C", "inv": [6, 4, 6], "s": "{1}", "pol": null, "p0": 0.332, "o": 1, "rev": 40, "proj": 267.5}, {"c": 6, "t": "C", "inv": [5, 4, 6], "s": "{1,2,3}", "pol": null, "p0": 0.14, "o": 2, "rev": 55, "proj": 268.4}, {"c": 7, "t": "A", "inv": [5, 3, 6], "s": "{1,2,3}", "pol": null, "p0": 0.336, "o": 0, "rev": 55, "proj": 268.5}, {"c": 8, "t": "B", "inv": [5, 3, 6], "s": "{1,2,3}", "pol": null, "p0": 0.1, "o": 2, "rev": 70, "proj": 267.7}, {"c": 9, "t": "C", "inv": [5, 2, 6], "s": "{1,3}", "pol": null, "p0": 0.198, "o": 1, "rev": 80, "proj": 267.7}, {"c": 10, "t": "C", "inv": [4, 2, 6], "s": "{1,3}", "pol": null, "p0": 0.198, "o": 0, "rev": 80, "proj": 268.5}, {"c": 11, "t": "C", "inv": [4, 2, 6], "s": "{1,3}", "pol": null, "p0": 0.198, "o": 0, "rev": 80, "proj": 267.6}, {"c": 12, "t": "C", "inv": [4, 2, 6], "s": "{1,3}", "pol": null, "p0": 0.198, "o": 0, "rev": 80, "proj": 266.2}, {"c": 13, "t": "A", "inv": [4, 2, 6], "s": "{1,2,3}", "pol": null, "p0": 0.336, "o": 0, "rev": 80, "proj": 264.1}, {"c": 14, "t": "B", "inv": [4, 2, 6], "s": "{1,2,3}", "pol": null, "p0": 0.1, "o": 2, "rev": 95, "proj": 261.0}, {"c": 15, "t": "C", "inv": [4, 1, 6], "s": "{1,3}", "pol": null, "p0": 0.198, "o": 1, "rev": 105, "proj": 261.0}, {"c": 16, "t": "C", "inv": [3, 1, 6], "s": "{1,3}", "pol": null, "p0": 0.198, "o": 1, "rev": 115, "proj": 262.5}, {"c": 17, "t": "C", "inv": [2, 1, 6], "s": "{1,3}", "pol": null, "p0": 0.198, "o": 1, "rev": 125, "proj": 263.3}, {"c": 18, "t": "C", "inv": [1, 1, 6], "s": "{3}", "pol": null, "p0": 0.329, "o": 3, "rev": 145, "proj": 263.7}, {"c": 19, "t": "A", "inv": [1, 1, 5], "s": "{1,3}", "pol": null, "p0": 0.358, "o": 3, "rev": 165, "proj": 266.0}, {"c": 20, "t": "B", "inv": [1, 1, 4], "s": "{1,2,3}", "pol": null, "p0": 0.1, "o": 2, "rev": 180, "proj": 267.7}, {"c": 21, "t": "A", "inv": [1, 0, 4], "s": "{1,3}", "pol": null, "p0": 0.358, "o": 3, "rev": 200, "proj": 267.6}, {"c": 22, "t": "B", "inv": [1, 0, 3], "s": "{1,3}", "pol": null, "p0": 0.331, "o": 1, "rev": 210, "proj": 268.8}, {"c": 23, "t": "B", "inv": [0, 0, 3], "s": "{3}", "pol": null, "p0": 0.498, "o": 0, "rev": 210, "proj": 269.0}, {"c": 24, "t": "B", "inv": [0, 0, 3], "s": "{3}", "pol": null, "p0": 0.498, "o": 0, "rev": 210, "proj": 267.9}, {"c": 25, "t": "A", "inv": [0, 0, 3], "s": "{3}", "pol": null, "p0": 0.386, "o": 3, "rev": 230, "proj": 265.9}, {"c": 26, "t": "A", "inv": [0, 0, 2], "s": "{3}", "pol": null, "p0": 0.386, "o": 3, "rev": 250, "proj": 268.2}, {"c": 27, "t": "A", "inv": [0, 0, 1], "s": "{3}", "pol": null, "p0": 0.386, "o": 3, "rev": 270, "proj": 269.5}];
   const PRICE = [0, 10, 15, 20];
   const fmt = (v) => "$" + v.toFixed(1);
   const outcomeText = (o) => o ? `bought product ${o} ($${PRICE[o]})` : "no purchase";
@@ -347,7 +355,7 @@ footer { color: var(--muted); font-size: 0.85rem; border-top: 1px solid var(--ru
     const tr = document.createElement("tr");
     if (!d.o) tr.className = "nobuy";
     tr.innerHTML = `<td class="num">${d.c}</td><td>${d.t}</td><td class="num">(${d.inv.join(", ")})</td>` +
-      `<td><span class="set">${d.s}</span></td><td class="num">${d.p0.toFixed(2)}</td>` +
+      `<td><span class="set">${d.s}</span>${d.pol ? ` <small>(policy: <span class="set">${d.pol}</span>)</small>` : ""}</td><td class="num">${d.p0.toFixed(2)}</td>` +
       `<td><span class="dot ${d.o ? "p" + d.o : "none"}"></span>${d.o ? "product " + d.o + " ($" + PRICE[d.o] + ")" : "none"}</td>` +
       `<td class="num">$${d.rev}</td><td class="num">${fmt(d.proj)}</td>`;
     tbody.appendChild(tr);
@@ -406,7 +414,7 @@ footer { color: var(--muted); font-size: 0.85rem; border-top: 1px solid var(--ru
     const X = xs(p.x);
     cross.setAttribute("x1", X); cross.setAttribute("x2", X); cross.setAttribute("visibility", "visible");
     tip.innerHTML = p.d
-      ? `<b>Customer ${p.d.c} · type ${p.d.t}</b><br>Inventory (${p.d.inv.join(", ")}) · shown <span class="set">${p.d.s}</span><br>` +
+      ? `<b>Customer ${p.d.c} · type ${p.d.t}</b><br>Inventory (${p.d.inv.join(", ")}) · shown <span class="set">${p.d.s}</span>${p.d.pol ? ` (policy: <span class="set">${p.d.pol}</span>)` : ""}<br>` +
         `Outcome: ${outcomeText(p.d.o)}<br>Projected total on arrival: <b>${fmt(p.d.proj)}</b>`
       : `<b>End of game</b><br>All 18 units sold<br>Final revenue: <b>$270</b>`;
     tip.hidden = false;

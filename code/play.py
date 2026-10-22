@@ -2,22 +2,20 @@
 
 Usage
 -----
-    python play.py                                   # start of the game
-    python play.py --customer 12 --inventory 3 4 2   # resume at customer 12 with stock (3, 4, 2)
-    python play.py --model empirical                 # plan with raw choice frequencies
+    python code/play.py                                   # start of the game
+    python code/play.py --customer 12 --inventory 3 4 2   # resume at customer 12 with stock (3, 4, 2)
+    python code/play.py --model empirical                 # plan with raw choice frequencies
 
 At each step, type the arriving customer's type (A/B/C), show the printed assortment,
 then type what they bought (0 = nothing, 1/2/3 = product number). 'u' undoes the last
 customer, 'q' quits.
 """
 import argparse
-from pathlib import Path
-
 import numpy as np
 
 import rm_model as rm
 
-DATA = Path(__file__).resolve().parent / "large_choice_training_data.csv"
+DATA = rm.DATA_PATH
 
 
 def build_policy(model, mix):
